@@ -28,6 +28,7 @@ import AdminProfilePage from '../pages/admin/AdminProfilePage';
 import AdminListPage from '../pages/admin/AdminListPage';
 import ResetPasswordRequestPage from '../pages/ResetPasswordRequestPage';
 import ResetPasswordPage from '../pages/ResetPasswordPage';
+import MfaPage from '../pages/MfaPage';
 
 const router = createBrowserRouter([
   {
@@ -58,6 +59,10 @@ const router = createBrowserRouter([
       {
         path: '/login',
         element: <LoginPage />
+      },
+      {
+        path: '/verify-mfa',
+        element: <MfaPage />
       },
       {
         path: '/register',

@@ -20,6 +20,11 @@ const protect = async (req, res, next) => {
 
     req.user = await User.findById(decodedToken.userId).select('-password');
 
+    if (!req.user) {
+      res.statusCode = 401;
+      throw new Error('Authentication failed: User not found.');
+    }
+
     next();
   } catch (error) {
     next(error);

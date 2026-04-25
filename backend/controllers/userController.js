@@ -1,6 +1,7 @@
 import User from '../models/userModel.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { generateToken } from '../utils/generateToken.js';
 import transporter from '../config/email.js';
 // @desc     Auth user & get token
@@ -28,6 +29,93 @@ const loginUser = async (req, res, next) => {
         'Invalid password. Please check your password and try again.'
       );
     }
+
+    // Generate 6-digit OTP, hash it, store with 10-minute expiry
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const hashedOtp = await bcrypt.hash(otp, 10);
+
+    user.mfaOtp = hashedOtp;
+    user.mfaOtpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    user.mfaOtpAttempts = 0;
+    await user.save();
+
+    await transporter.sendMail({
+      from: `"MERN Shop" <${process.env.EMAIL_FROM}>`,
+      to: user.email,
+      subject: 'Your MERN Shop Login Code',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;border:1px solid #e0e0e0;border-radius:8px">
+          <h2 style="color:#222;margin-top:0">Login Verification</h2>
+          <p style="color:#555">Hi ${user.name},</p>
+          <p style="color:#555">Use the code below to complete your sign-in. It expires in <strong>10 minutes</strong>.</p>
+          <div style="text-align:center;margin:28px 0">
+            <span style="font-size:36px;font-weight:700;letter-spacing:12px;color:#1a1f2e;background:#f5f5f5;padding:14px 24px;border-radius:8px;display:inline-block">${otp}</span>
+          </div>
+          <p style="color:#888;font-size:13px">If you did not attempt to log in, please ignore this email.</p>
+          <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
+          <p style="color:#aaa;font-size:12px;margin:0">MERN Shop &bull; Do not share this code with anyone</p>
+        </div>
+      `
+    });
+
+    res.status(200).json({
+      mfaRequired: true,
+      userId: user._id,
+      message: 'Verification code sent to your email.'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc     Verify MFA OTP and issue session token
+// @method   POST
+// @endpoint /api/v1/users/verify-mfa
+// @access   Public
+const verifyMfa = async (req, res, next) => {
+  try {
+    const { userId, otp } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user || !user.mfaOtp || !user.mfaOtpExpiry) {
+      res.statusCode = 400;
+      throw new Error('Invalid or expired verification session. Please log in again.');
+    }
+
+    if (user.mfaOtpExpiry < new Date()) {
+      user.mfaOtp = undefined;
+      user.mfaOtpExpiry = undefined;
+      user.mfaOtpAttempts = 0;
+      await user.save();
+      res.statusCode = 400;
+      throw new Error('Verification code has expired. Please log in again.');
+    }
+
+    if (user.mfaOtpAttempts >= 3) {
+      user.mfaOtp = undefined;
+      user.mfaOtpExpiry = undefined;
+      user.mfaOtpAttempts = 0;
+      await user.save();
+      res.statusCode = 429;
+      throw new Error('Too many failed attempts. Please log in again.');
+    }
+
+    const match = await bcrypt.compare(otp, user.mfaOtp);
+
+    if (!match) {
+      user.mfaOtpAttempts += 1;
+      await user.save();
+      const remaining = 3 - user.mfaOtpAttempts;
+      res.statusCode = 401;
+      throw new Error(`Invalid code. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`);
+    }
+
+    // OTP valid — clear MFA fields and issue session
+    user.mfaOtp = undefined;
+    user.mfaOtpExpiry = undefined;
+    user.mfaOtpAttempts = 0;
+    await user.save();
 
     generateToken(req, res, user._id);
 
@@ -275,7 +363,7 @@ const resetPasswordRequest = async (req, res, next) => {
     const passwordResetLink = `https://mern-shop-abxs.onrender.com/reset-password/${user._id}/${token}`;
     console.log(passwordResetLink);
     await transporter.sendMail({
-      from: `"MERN Shop" ${process.env.EMAIL_FROM}`, // sender address
+      from: `"MERN Shop" <${process.env.EMAIL_FROM}>`, // sender address
       to: user.email, // list of receivers
       subject: 'Password Reset', // Subject line
       html: `<p>Hi ${user.name},</p>
@@ -336,5 +424,6 @@ export {
   deleteUser,
   admins,
   resetPasswordRequest,
-  resetPassword
+  resetPassword,
+  verifyMfa
 };

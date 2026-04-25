@@ -11,7 +11,8 @@ import {
   getUserById,
   admins,
   resetPasswordRequest,
-  resetPassword
+  resetPassword,
+  verifyMfa
 } from '../controllers/userController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import validateRequest from '../middleware/validator.js';
@@ -46,6 +47,10 @@ const validator = {
       .isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
     param('id').exists().withMessage('Id is required').isMongoId().withMessage('Invalid Id'),
     param('token').trim().notEmpty().withMessage('Token is Required')
+  ],
+  verifyMfa: [
+    body('userId').notEmpty().withMessage('User ID is required').isMongoId().withMessage('Invalid User ID'),
+    body('otp').notEmpty().withMessage('OTP is required').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits').isNumeric().withMessage('OTP must be numeric')
   ]
 }
 
@@ -58,6 +63,7 @@ router.route('/admins').get(protect, admin, admins);
 router.post('/reset-password/request', validator.resetPasswordRequest, validateRequest, resetPasswordRequest);
 router.post('/reset-password/reset/:id/:token', validator.resetPassword, validateRequest, resetPassword);
 router.post('/login', validator.checkLogin, validateRequest, loginUser);
+router.post('/verify-mfa', validator.verifyMfa, validateRequest, verifyMfa);
 router.post('/logout', protect, logoutUser);
 
 router

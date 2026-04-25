@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 
 import { useParams, Link } from 'react-router-dom';
 import { Row, Col, ListGroup, Button, Image, Card } from 'react-bootstrap';
@@ -6,22 +6,18 @@ import {
   useGetOrderDetailsQuery,
   usePayOrderMutation,
   useUpdateDeliverMutation,
-  useGetRazorpayApiKeyQuery
 } from '../slices/ordersApiSlice';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { FaIndianRupeeSign } from 'react-icons/fa6';
 import Loader from '../components/Loader';
 import Message from '../components/Message';
 import ServerError from '../components/ServerError';
-
-import axios from 'axios';
+import MockRazorpayModal from '../components/MockRazorpayModal';
 import Meta from '../components/Meta';
 import { addCurrency } from '../utils/addCurrency';
-// import { RAZORPAY_URL } from '../constants';
+
 const OrderDetailsPage = () => {
   const { id: orderId } = useParams();
-  // console.log(useGetOrderDetailsQuery());
   const { data: order, isLoading, error } = useGetOrderDetailsQuery(orderId);
 
   const [payOrder, { isLoading: isPayOrderLoading }] = usePayOrderMutation();
@@ -29,72 +25,21 @@ const OrderDetailsPage = () => {
     useUpdateDeliverMutation();
 
   const { userInfo } = useSelector(state => state.auth);
+  const [showPayModal, setShowPayModal] = useState(false);
 
-  const { data: razorpayApiKey } = useGetRazorpayApiKeyQuery();
+  const paymentHandler = () => setShowPayModal(true);
 
-  const paymentHandler = async e => {
+  const handleMockPaymentSuccess = async () => {
     try {
-      // Make the API call to Razorpay
-
-      const razorpayData = {
-        amount: order.totalPrice * 100, // Razorpay expects the amount in paisa, so multiply by 100
-        currency: 'INR',
-        receipt: `receipt#${orderId}`
+      setShowPayModal(false);
+      const details = {
+        id: `pay_mock_${Date.now()}`,
+        status: 'captured',
+        updateTime: new Date().toISOString(),
+        email: order?.user?.email,
       };
-      const { data } = await axios.post(
-        '/api/v1/payment/razorpay/order',
-        razorpayData
-      );
-
-      const { id: razorpayOrderId } = data;
-
-      const options = {
-        key: razorpayApiKey.razorpayKeyId, // Enter the Key ID generated from the Dashboard
-        amount: razorpayData.amount, // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
-        currency: razorpayData.currency,
-        name: 'MERN Shop', //your business name
-        description: 'Test Transaction',
-        image: 'https://example.com/your_logo',
-        order_id: razorpayOrderId, //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
-        handler: async response => {
-          try {
-            const { data } = await axios.post(
-              `/api/v1/payment/razorpay/order/validate`,
-              response
-            );
-            const details = { ...data, email: order?.user?.email };
-            await payOrder({ orderId, details });
-            toast.success(data.message);
-          } catch (error) {
-            toast.error(error?.data?.message || error.error);
-          }
-        },
-        prefill: {
-          //We recommend using the prefill parameter to auto-fill customer's contact information, especially their phone number
-          name: order?.user?.name, //your customer's name
-          email: order?.user?.email
-          // contact: '9000090000' //Provide the customer's phone number for better conversion rates
-        },
-        notes: {
-          address: 'MERN Shop Office'
-        },
-        theme: {
-          color: '#FFC107'
-        }
-      };
-      var rzp1 = new window.Razorpay(options);
-      rzp1.open();
-      // e.preventDefault();
-
-      // rzp1.on('payment.failed', response => {
-      //   alert(response.error.code);
-      //   alert(response.error.description);
-      //   alert(response.error.source);
-      //   alert(response.error.step);
-      //   alert(response.error.reason);
-      //   alert(response.error.metadata.order_id);
-      //   alert(response.error.metadata.payment_id);
-      // });
+      await payOrder({ orderId, details }).unwrap();
+      toast.success('Payment successful!');
     } catch (error) {
       toast.error(error?.data?.message || error.error);
     }
@@ -258,6 +203,15 @@ const OrderDetailsPage = () => {
           </Row>
         </>
       )}
+
+      <MockRazorpayModal
+        show={showPayModal}
+        onClose={() => setShowPayModal(false)}
+        amount={order?.totalPrice}
+        merchantName='MERN Shop'
+        userName={order?.user?.name}
+        onPaymentSuccess={handleMockPaymentSuccess}
+      />
     </>
   );
 };

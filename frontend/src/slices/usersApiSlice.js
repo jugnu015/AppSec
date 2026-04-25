@@ -88,6 +88,14 @@ export const usersApiSlice = apiSlice.injectEndpoints({
         body: { ...userData }
       }),
       invalidatesTags: ['User']
+    }),
+    verifyMfa: builder.mutation({
+      query: data => ({
+        url: `${USERS_URL}/verify-mfa`,
+        method: 'POST',
+        body: data
+      }),
+      invalidatesTags: ['User']
     })
   })
 });
@@ -104,5 +112,6 @@ export const {
   useDeleteUserMutation,
   useUpdateUserMutation,
   useGetUserByIdQuery,
-  useAdminsQuery
+  useAdminsQuery,
+  useVerifyMfaMutation
 } = usersApiSlice;

@@ -37,6 +37,7 @@ const PlaceOrderPage = () => {
 
   const placeOrderHandler = async () => {
     try {
+      console.log("placeOrder")
       const res = await createOrder({
         cartItems,
         shippingAddress,
@@ -46,7 +47,9 @@ const PlaceOrderPage = () => {
         shippingPrice,
         totalPrice
       }).unwrap();
+      console.log("placeOrder2")
       dispatch(clearCartItems());
+      console.log("placeOrderAfter")
       navigate(`/order/${res._id}`);
     } catch (error) {
       toast.error(error?.data?.message || error.error);

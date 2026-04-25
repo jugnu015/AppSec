@@ -41,9 +41,14 @@ const LoginPage = () => {
     e.preventDefault();
     try {
       const res = await login({ email, password, remember }).unwrap();
-      dispatch(setCredentials({ ...res }));
-      navigate(redirect);
-      toast.success('Login successful');
+      if (res.mfaRequired) {
+        navigate('/verify-mfa', { state: { userId: res.userId, redirect, remember } });
+        toast.info('Check your email for a verification code.');
+      } else {
+        dispatch(setCredentials({ ...res }));
+        navigate(redirect);
+        toast.success('Login successful');
+      }
     } catch (error) {
       toast.error(error?.data?.message || error.error);
     }

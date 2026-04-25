@@ -24,7 +24,11 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       required: true,
       default: false
-    }
+    },
+    // MFA one-time password (bcrypt-hashed)
+    mfaOtp: { type: String },
+    mfaOtpExpiry: { type: Date },
+    mfaOtpAttempts: { type: Number, default: 0 }
   },
   { timestamps: true } // Adds createdAt and updatedAt timestamps
 );
