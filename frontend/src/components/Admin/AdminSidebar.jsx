@@ -11,7 +11,7 @@ import {
 } from 'react-icons/fa6';
 import { LinkContainer } from 'react-router-bootstrap';
 import { useLogoutMutation } from '../../slices/usersApiSlice';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../../slices/authSlice';
 import { toast } from 'react-toastify';
@@ -20,6 +20,7 @@ const Sidebar = () => {
   const [logoutApiCall] = useLogoutMutation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { userInfo } = useSelector(state => state.auth);
 
   const logoutHandler = async () => {
     try {
@@ -78,17 +79,19 @@ const Sidebar = () => {
           </strong>
         </Nav.Link>
       </LinkContainer>
-      <LinkContainer to='/admin/admin-list' className='mb-2'>
-        <Nav.Link>
-          <strong>
-            <FaUserGroup
-              style={{ marginRight: '10px', marginBottom: '3px' }}
-              size={16}
-            />
-            Admins
-          </strong>
-        </Nav.Link>
-      </LinkContainer>
+      {userInfo?.isSuperAdmin && (
+        <LinkContainer to='/admin/admin-list' className='mb-2'>
+          <Nav.Link>
+            <strong>
+              <FaUserGroup
+                style={{ marginRight: '10px', marginBottom: '3px' }}
+                size={16}
+              />
+              Admins
+            </strong>
+          </Nav.Link>
+        </LinkContainer>
+      )}
       <LinkContainer to='/admin/profile' className='mb-2'>
         <Nav.Link>
           <strong>

@@ -15,7 +15,7 @@ import {
   verifyMfa,
   verifyEmail
 } from '../controllers/userController.js';
-import { protect, admin } from '../middleware/authMiddleware.js';
+import { protect, admin, superAdmin } from '../middleware/authMiddleware.js';
 import validateRequest from '../middleware/validator.js';
 import {body, param} from 'express-validator';
 
@@ -59,7 +59,7 @@ router.route('/')
   .post(validator.checkNewUser, validateRequest, registerUser)
   .get(protect, admin, getUsers);
 
-router.route('/admins').get(protect, admin, admins);
+router.route('/admins').get(protect, superAdmin, admins);
 
 router.post('/reset-password/request', validator.resetPasswordRequest, validateRequest, resetPasswordRequest);
 router.post('/reset-password/reset/:id/:token', validator.resetPassword, validateRequest, resetPassword);

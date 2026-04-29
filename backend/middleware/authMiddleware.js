@@ -44,4 +44,17 @@ const admin = (req, res, next) => {
   }
 };
 
-export { protect, admin };
+// Middleware to check if the user is a superadmin.
+const superAdmin = (req, res, next) => {
+  try {
+    if (!req.user || !req.user.isSuperAdmin) {
+      res.statusCode = 401;
+      throw new Error('Authorization failed: Not authorized as a superadmin.');
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+export { protect, admin, superAdmin };

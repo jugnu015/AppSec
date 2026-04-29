@@ -156,7 +156,8 @@ const verifyMfa = async (req, res, next) => {
       userId: user._id,
       name: user.name,
       email: user.email,
-      isAdmin: user.isAdmin
+      isAdmin: user.isAdmin,
+      isSuperAdmin: user.isSuperAdmin
     });
   } catch (error) {
     next(error);
@@ -284,7 +285,8 @@ const getUserProfile = async (req, res, next) => {
       userId: user._id,
       name: user.name,
       email: user.email,
-      isAdmin: user.isAdmin
+      isAdmin: user.isAdmin,
+      isSuperAdmin: user.isSuperAdmin
     });
   } catch (error) {
     next(error);
@@ -359,9 +361,18 @@ const updateUser = async (req, res, next) => {
       res.statusCode = 404;
       throw new Error('User not found!');
     }
+
+    // Restrict admin management to superAdmins
+    if ((user.isAdmin || String(isAdmin) === 'true') && !req.user.isSuperAdmin) {
+      res.statusCode = 403;
+      throw new Error('Only superadmins can add or remove admin privileges.');
+    }
+
     user.name = name || user.name;
     user.email = email || user.email;
-    user.isAdmin = Boolean(isAdmin);
+    if (isAdmin !== undefined) {
+      user.isAdmin = Boolean(isAdmin);
+    }
 
     const updatedUser = await user.save();
 
