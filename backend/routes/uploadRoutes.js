@@ -29,7 +29,9 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, fileFilter }).single('image');
 
-router.post('/', upload, (req, res) => {
+import { protect, admin } from '../middleware/authMiddleware.js';
+
+router.post('/', protect, admin, upload, (req, res) => {
   if (!req.file)
     throw res.status(400).json({error: 'No file uploaded'});
 

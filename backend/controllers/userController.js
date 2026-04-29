@@ -297,7 +297,7 @@ const getUserProfile = async (req, res, next) => {
 // @access   Private/Admin
 const admins = async (req, res, next) => {
   try {
-    const admins = await User.find({ isAdmin: true });
+    const admins = await User.find({ isAdmin: true }).select('-password');
 
     if (!admins || admins.length === 0) {
       res.statusCode = 404;
@@ -315,7 +315,7 @@ const admins = async (req, res, next) => {
 // @access   Private/Admin
 const getUsers = async (req, res, next) => {
   try {
-    const users = await User.find({ isAdmin: false });
+    const users = await User.find({ isAdmin: false }).select('-password');
 
     if (!users || users.length === 0) {
       res.statusCode = 404;
@@ -333,7 +333,7 @@ const getUsers = async (req, res, next) => {
 const getUserById = async (req, res, next) => {
   try {
     const { id: userId } = req.params;
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select('-password');
     if (!user) {
       res.statusCode = 404;
       throw new Error('User not found!');
@@ -379,6 +379,11 @@ const updateUser = async (req, res, next) => {
 // @access   Private
 const updateUserProfile = async (req, res, next) => {
   try {
+    if ('isAdmin' in req.body) {
+      res.statusCode = 403;
+      throw new Error('Unauthorized attempt to escalate privileges.');
+    }
+
     const { name, email, password } = req.body;
 
     const user = await User.findById(req.user._id);
