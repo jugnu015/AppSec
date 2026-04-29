@@ -1,9 +1,15 @@
 import React from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useGetUserProfileQuery } from '../slices/usersApiSlice';
+import Loader from './Loader';
+
 const AdminRoute = () => {
-  const { userInfo } = useSelector(state => state.auth);
-  return userInfo && userInfo.isAdmin ? (
+  // Secure check: Fetch the real user profile from the backend
+  const { data: userProfile, isLoading } = useGetUserProfileQuery();
+
+  if (isLoading) return <Loader />;
+
+  return userProfile && userProfile.isAdmin ? (
     <Outlet />
   ) : (
     <Navigate to='/admin/login' replace />

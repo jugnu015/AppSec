@@ -155,9 +155,7 @@ const verifyMfa = async (req, res, next) => {
       message: 'Login successful.',
       userId: user._id,
       name: user.name,
-      email: user.email,
-      isAdmin: user.isAdmin,
-      isSuperAdmin: user.isSuperAdmin
+      email: user.email
     });
   } catch (error) {
     next(error);
@@ -390,7 +388,7 @@ const updateUser = async (req, res, next) => {
 // @access   Private
 const updateUserProfile = async (req, res, next) => {
   try {
-    if ('isAdmin' in req.body) {
+    if ('isAdmin' in req.body || 'isSuperAdmin' in req.body) {
       res.statusCode = 403;
       throw new Error('Unauthorized attempt to escalate privileges.');
     }

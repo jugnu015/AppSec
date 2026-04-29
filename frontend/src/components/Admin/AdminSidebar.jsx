@@ -10,8 +10,8 @@ import {
   FaUsers
 } from 'react-icons/fa6';
 import { LinkContainer } from 'react-router-bootstrap';
-import { useLogoutMutation } from '../../slices/usersApiSlice';
-import { useDispatch, useSelector } from 'react-redux';
+import { useLogoutMutation, useGetUserProfileQuery } from '../../slices/usersApiSlice';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../../slices/authSlice';
 import { toast } from 'react-toastify';
@@ -20,7 +20,8 @@ const Sidebar = () => {
   const [logoutApiCall] = useLogoutMutation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { userInfo } = useSelector(state => state.auth);
+  // Fetch real profile from backend instead of local storage
+  const { data: userProfile } = useGetUserProfileQuery();
 
   const logoutHandler = async () => {
     try {
@@ -79,7 +80,7 @@ const Sidebar = () => {
           </strong>
         </Nav.Link>
       </LinkContainer>
-      {userInfo?.isSuperAdmin && (
+      {userProfile?.isSuperAdmin && (
         <LinkContainer to='/admin/admin-list' className='mb-2'>
           <Nav.Link>
             <strong>

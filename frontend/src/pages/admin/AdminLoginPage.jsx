@@ -3,7 +3,7 @@ import { Form, Button, InputGroup, Card } from 'react-bootstrap';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useLoginMutation } from '../../slices/usersApiSlice';
+import { useLoginMutation, useGetUserProfileQuery } from '../../slices/usersApiSlice';
 import { setCredentials } from '../../slices/authSlice';
 import { toast, ToastContainer } from 'react-toastify';
 import FormContainer from '../../components/FormContainer';
@@ -27,11 +27,13 @@ const AdminLoginPage = () => {
 
   const [login, { isLoading }] = useLoginMutation();
 
+  const { data: userProfile } = useGetUserProfileQuery();
+
   useEffect(() => {
-    if (userInfo && userInfo.isAdmin) {
+    if (userInfo && userProfile?.isAdmin) {
       navigate(redirect);
     }
-  }, [userInfo, redirect, navigate]);
+  }, [userInfo, userProfile, redirect, navigate]);
 
   const submitHandler = async e => {
     e.preventDefault();
