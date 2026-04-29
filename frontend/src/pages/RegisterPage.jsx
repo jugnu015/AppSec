@@ -50,9 +50,8 @@ const RegisterPage = () => {
     } else {
       try {
         const res = await register({ name, email, password }).unwrap();
-        dispatch(setCredentials({ ...res }));
-        navigate(redirect);
-        toast.success('Registration successful. Welcome!');
+        navigate(`/login?redirect=${redirect}`);
+        toast.success(res.message || 'Registration successful. Please log in.');
       } catch (error) {
         toast.error(error?.data?.message || error.error);
       }

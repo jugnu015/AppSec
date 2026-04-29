@@ -142,7 +142,7 @@ const MfaPage = () => {
           {expired ? (
             <span className='text-danger' style={{ fontSize: 13 }}>
               Code expired.{' '}
-              <Link to='/login' style={{ color: '#dc3545' }}>
+              <Link to={redirect.includes('admin') ? '/admin/login' : '/login'} style={{ color: '#dc3545' }}>
                 Log in again
               </Link>
             </span>
@@ -165,7 +165,7 @@ const MfaPage = () => {
 
       <div className='text-center' style={{ fontSize: 13, color: '#6c757d' }}>
         Didn't receive the code?{' '}
-        <Link to='/login'>Go back and try again</Link>
+        <Link to={redirect.includes('admin') ? '/admin/login' : '/login'}>Go back and try again</Link>
       </div>
     </FormContainer>
   );

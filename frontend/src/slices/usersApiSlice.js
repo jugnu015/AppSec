@@ -96,6 +96,14 @@ export const usersApiSlice = apiSlice.injectEndpoints({
         body: data
       }),
       invalidatesTags: ['User']
+    }),
+    verifyEmail: builder.mutation({
+      query: data => ({
+        url: `${USERS_URL}/verify-email`,
+        method: 'POST',
+        body: data
+      }),
+      invalidatesTags: ['User']
     })
   })
 });
@@ -113,5 +121,6 @@ export const {
   useUpdateUserMutation,
   useGetUserByIdQuery,
   useAdminsQuery,
-  useVerifyMfaMutation
+  useVerifyMfaMutation,
+  useVerifyEmailMutation
 } = usersApiSlice;

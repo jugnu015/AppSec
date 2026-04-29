@@ -29,6 +29,7 @@ import AdminListPage from '../pages/admin/AdminListPage';
 import ResetPasswordRequestPage from '../pages/ResetPasswordRequestPage';
 import ResetPasswordPage from '../pages/ResetPasswordPage';
 import MfaPage from '../pages/MfaPage';
+import VerifyEmailPage from '../pages/VerifyEmailPage';
 
 const router = createBrowserRouter([
   {
@@ -67,6 +68,10 @@ const router = createBrowserRouter([
       {
         path: '/register',
         element: <RegisterPage />
+      },
+      {
+        path: '/verify-email/:token',
+        element: <VerifyEmailPage />
       },
       {
         path: '',

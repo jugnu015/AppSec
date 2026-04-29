@@ -30,6 +30,38 @@ const loginUser = async (req, res, next) => {
       );
     }
 
+    if (!user.isVerified) {
+      const verificationToken = jwt.sign(
+        { userId: user._id },
+        process.env.JWT_SECRET,
+        { expiresIn: '1d' }
+      );
+
+      const verificationLink = `http://localhost:3000/verify-email/${verificationToken}`;
+
+      await transporter.sendMail({
+        from: `"MERN Shop" <${process.env.EMAIL_FROM || 'noreply@mernshop.com'}>`,
+        to: user.email,
+        subject: 'Please Verify Your Email - MERN Shop',
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;border:1px solid #e0e0e0;border-radius:8px">
+            <h2 style="color:#222;margin-top:0">Verify Your Email Address</h2>
+            <p style="color:#555">Hi ${user.name},</p>
+            <p style="color:#555">You attempted to log in, but your email address hasn't been verified yet. Please verify your email address by clicking the link below:</p>
+            <div style="text-align:center;margin:28px 0">
+              <a href="${verificationLink}" style="background-color:#007bff;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;display:inline-block">Verify Email</a>
+            </div>
+            <p style="color:#888;font-size:13px">If you did not request this, no further action is required.</p>
+            <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
+            <p style="color:#aaa;font-size:12px;margin:0">MERN Shop Team</p>
+          </div>
+        `
+      });
+
+      res.statusCode = 403;
+      throw new Error('Your account is not verified. A new verification email has been sent.');
+    }
+
     // Generate 6-digit OTP, hash it, store with 10-minute expiry
     const otp = crypto.randomInt(100000, 999999).toString();
     const hashedOtp = await bcrypt.hash(otp, 10);
@@ -156,17 +188,71 @@ const registerUser = async (req, res, next) => {
 
     await user.save();
 
-    generateToken(req, res, user._id);
+    // Generate email verification token
+    const verificationToken = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    const verificationLink = `http://localhost:3000/verify-email/${verificationToken}`;
+
+    await transporter.sendMail({
+      from: `"MERN Shop" <${process.env.EMAIL_FROM || 'noreply@mernshop.com'}>`,
+      to: user.email,
+      subject: 'Please Verify Your Email - MERN Shop',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;border:1px solid #e0e0e0;border-radius:8px">
+          <h2 style="color:#222;margin-top:0">Verify Your Email Address</h2>
+          <p style="color:#555">Hi ${user.name},</p>
+          <p style="color:#555">Welcome to MERN Shop! Please verify your email address to complete your registration by clicking the link below:</p>
+          <div style="text-align:center;margin:28px 0">
+            <a href="${verificationLink}" style="background-color:#007bff;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;display:inline-block">Verify Email</a>
+          </div>
+          <p style="color:#888;font-size:13px">If you did not create an account, no further action is required.</p>
+          <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
+          <p style="color:#aaa;font-size:12px;margin:0">MERN Shop Team</p>
+        </div>
+      `
+    });
 
     res.status(201).json({
-      message: 'Registration successful. Welcome!',
-      userId: user._id,
-      name: user.name,
-      email: user.email,
-      isAdmin: user.isAdmin
+      message: 'Registration successful. A verification email has been sent. Please log in.'
     });
   } catch (error) {
     next(error);
+  }
+};
+
+// @desc     Verify user email
+// @method   POST
+// @endpoint /api/users/verify-email
+// @access   Public
+const verifyEmail = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      res.statusCode = 400;
+      throw new Error('Verification token is missing.');
+    }
+
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+
+    const user = await User.findById(decodedToken.userId);
+
+    if (!user) {
+      res.statusCode = 404;
+      throw new Error('User not found.');
+    }
+
+    user.isVerified = true;
+    await user.save();
+
+    res.status(200).json({ message: 'Email verified successfully.' });
+  } catch (error) {
+    res.statusCode = 400;
+    next(new Error('Invalid or expired verification token.'));
   }
 };
 
@@ -360,7 +446,7 @@ const resetPasswordRequest = async (req, res, next) => {
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: '15m'
     });
-    const passwordResetLink = `https://mern-shop-abxs.onrender.com/reset-password/${user._id}/${token}`;
+    const passwordResetLink = `http://localhost:3000/reset-password/${user._id}/${token}`;
     console.log(passwordResetLink);
     await transporter.sendMail({
       from: `"MERN Shop" <${process.env.EMAIL_FROM}>`, // sender address
@@ -425,5 +511,6 @@ export {
   admins,
   resetPasswordRequest,
   resetPassword,
-  verifyMfa
+  verifyMfa,
+  verifyEmail
 };

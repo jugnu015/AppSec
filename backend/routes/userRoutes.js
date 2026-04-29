@@ -12,7 +12,8 @@ import {
   admins,
   resetPasswordRequest,
   resetPassword,
-  verifyMfa
+  verifyMfa,
+  verifyEmail
 } from '../controllers/userController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import validateRequest from '../middleware/validator.js';
@@ -64,7 +65,8 @@ router.post('/reset-password/request', validator.resetPasswordRequest, validateR
 router.post('/reset-password/reset/:id/:token', validator.resetPassword, validateRequest, resetPassword);
 router.post('/login', validator.checkLogin, validateRequest, loginUser);
 router.post('/verify-mfa', validator.verifyMfa, validateRequest, verifyMfa);
-router.post('/logout', protect, logoutUser);
+router.post('/verify-email', verifyEmail);
+router.post('/logout', logoutUser);
 
 router
   .route('/profile')

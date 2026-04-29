@@ -37,9 +37,14 @@ const AdminLoginPage = () => {
     e.preventDefault();
     try {
       const res = await login({ email, password, remember }).unwrap();
-      dispatch(setCredentials({ ...res }));
-      navigate('/admin/dashboard');
-      toast.success('Login successful');
+      if (res.mfaRequired) {
+        navigate('/verify-mfa', { state: { userId: res.userId, redirect: '/admin/dashboard', remember } });
+        toast.info('Check your email for a verification code.');
+      } else {
+        dispatch(setCredentials({ ...res }));
+        navigate('/admin/dashboard');
+        toast.success('Login successful');
+      }
     } catch (error) {
       toast.error(error?.data?.message || error.error);
     }
