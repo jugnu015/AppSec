@@ -28,7 +28,8 @@ const validator = {
   checkNewUser: [
     body('email').trim().notEmpty().withMessage('Email is Required').bail().isEmail().withMessage("Please enter a valid email address"),
     body('password').trim().isString().notEmpty().withMessage('Password is Empty').bail()
-      .isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+      .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+      .matches(/^(?=.*[A-Z])(?=.*\d)/).withMessage('Password must contain at least one uppercase letter and one number'),
     body('name').trim().notEmpty().withMessage('Name is Required').escape()
   ],
   checkGetUserById: [
@@ -45,7 +46,8 @@ const validator = {
   ],
   resetPassword: [
     body('password').trim().notEmpty().withMessage('Password is Required').escape().bail()
-      .isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+      .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+      .matches(/^(?=.*[A-Z])(?=.*\d)/).withMessage('Password must contain at least one uppercase letter and one number'),
     param('id').exists().withMessage('Id is required').isMongoId().withMessage('Invalid Id'),
     param('token').trim().notEmpty().withMessage('Token is Required')
   ],

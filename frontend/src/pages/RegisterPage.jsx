@@ -47,6 +47,10 @@ const RegisterPage = () => {
     if (password !== confirmPassword) {
       toast.error('Passwords do not match!');
       return;
+    }
+    if (password.length < 8 || !/^(?=.*[A-Z])(?=.*\d)/.test(password)) {
+      toast.error('Password must be at least 8 characters long, containing at least 1 number and 1 uppercase letter.');
+      return;
     } else {
       try {
         const res = await register({ name, email, password }).unwrap();
@@ -98,6 +102,9 @@ const RegisterPage = () => {
               {showPassword ? <FaEye /> : <FaEyeSlash />}
             </InputGroup.Text>
           </InputGroup>
+          <Form.Text className="text-muted">
+            Password must be at least 8 characters long, containing at least 1 number and 1 uppercase letter.
+          </Form.Text>
         </Form.Group>
         <Form.Group className='mb-3' controlId='confirmPassword'>
           <Form.Label>Confirm Password</Form.Label>
