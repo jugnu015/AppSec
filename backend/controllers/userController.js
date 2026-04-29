@@ -15,9 +15,9 @@ const loginUser = async (req, res, next) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      res.statusCode = 404;
+      res.statusCode = 401;
       throw new Error(
-        'Invalid email address. Please check your email and try again.'
+        'Invalid credentials. Please check your email and password.'
       );
     }
 
@@ -26,7 +26,7 @@ const loginUser = async (req, res, next) => {
     if (!match) {
       res.statusCode = 401;
       throw new Error(
-        'Invalid password. Please check your password and try again.'
+        'Invalid credentials. Please check your email and password.'
       );
     }
 
@@ -453,8 +453,7 @@ const resetPasswordRequest = async (req, res, next) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      res.statusCode = 404;
-      throw new Error('User not found!');
+      return res.status(200).json({ message: 'If that email exists, a reset link has been sent.' });
     }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
@@ -480,7 +479,7 @@ const resetPasswordRequest = async (req, res, next) => {
 
     res
       .status(200)
-      .json({ message: 'Password reset email sent, please check your email.' });
+      .json({ message: 'If that email exists, a reset link has been sent.' });
   } catch (error) {
     next(error);
   }
