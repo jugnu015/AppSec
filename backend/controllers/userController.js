@@ -21,13 +21,35 @@ const loginUser = async (req, res, next) => {
       );
     }
 
+    // Check if account is locked due to brute-force protection
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      res.statusCode = 429; // Too Many Requests
+      const secondsLeft = Math.ceil((user.lockUntil - Date.now()) / 1000);
+      throw new Error(`Account temporarily locked due to too many failed login attempts. Please try again in ${secondsLeft} seconds.`);
+    }
+
     const match = await bcrypt.compare(password, user.password);
 
     if (!match) {
+      user.loginAttempts = (user.loginAttempts || 0) + 1;
+      
+      if (user.loginAttempts >= 5) {
+        user.lockUntil = Date.now() + 30 * 1000; // Lock for 30 seconds
+      }
+      
+      await user.save();
+
       res.statusCode = 401;
       throw new Error(
         'Invalid credentials. Please check your email and password.'
       );
+    }
+
+    // Successful login: clear brute-force counters
+    if (user.loginAttempts > 0 || user.lockUntil) {
+      user.loginAttempts = 0;
+      user.lockUntil = undefined;
+      await user.save();
     }
 
     if (!user.isVerified) {

@@ -1,4 +1,4 @@
-import express from 'express';import { body, check } from 'express-validator';
+import express from 'express'; import { body, check } from 'express-validator';
 import multer from 'multer';
 import validateRequest from '../middleware/validator.js';
 
@@ -14,26 +14,26 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-    if (
-    file.mimetype === 'image/png' ||
-    file.mimetype === 'image/jpg' ||
-    file.mimetype === 'image/jpeg'
-  ) {
-    // To accept the file pass `true`, like so:
+  const allowedMimetypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  
+  if (allowedMimetypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-        // To reject this file pass `false`, like so:
-    cb('Images only!');
+    cb(new Error('Only JPG, JPEG, PNG, and WebP files are allowed!'), false);
   }
 };
 
-const upload = multer({ storage, fileFilter }).single('image');
+const upload = multer({ 
+  storage, 
+  fileFilter,
+  limits: { fileSize: 2 * 1024 * 1024 } // 2MB size limit
+}).single('image');
 
 import { protect, admin } from '../middleware/authMiddleware.js';
 
 router.post('/', protect, admin, upload, (req, res) => {
   if (!req.file)
-    throw res.status(400).json({error: 'No file uploaded'});
+    throw res.status(400).json({ error: 'No file uploaded' });
 
   res.send({
     message: 'Image uploaded',

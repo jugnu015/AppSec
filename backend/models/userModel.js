@@ -35,10 +35,12 @@ const userSchema = new mongoose.Schema(
       required: true,
       default: false
     },
-    // MFA one-time password (bcrypt-hashed)
     mfaOtp: { type: String },
     mfaOtpExpiry: { type: Date },
-    mfaOtpAttempts: { type: Number, default: 0 }
+    mfaOtpAttempts: { type: Number, default: 0 },
+    // Brute-force lockout fields
+    loginAttempts: { type: Number, required: true, default: 0 },
+    lockUntil: { type: Date }
   },
   { timestamps: true } // Adds createdAt and updatedAt timestamps
 );
